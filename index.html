@@ -199,7 +199,7 @@ button.order{
 
   <div class="group-content">
 
-<div class="product" data-name="Pistol DE .50" data-price="10.000">
+<div class="product" data-name="Pistol DE .50" data-price="10000">
       <div>Pistol DE .50<br><small>$10,000</small></div>
       <div class="qty">
         <button onclick="changeQty(this,-1)">-</button>
@@ -208,7 +208,7 @@ button.order{
       </div>
     </div>
 
-    <div class="product" data-name="Pistol Ceramic" data-price="27.000">
+    <div class="product" data-name="Pistol Ceramic" data-price="27000">
       <div>Pistol Ceramic<br><small>$27,000</small></div>
       <div class="qty">
         <button onclick="changeQty(this,-1)">-</button>
@@ -217,7 +217,7 @@ button.order{
       </div>
     </div>
 
-    <div class="product" data-name="Micro SMG" data-price="33.000">
+    <div class="product" data-name="Micro SMG" data-price="33000">
       <div>Micro SMG<br><small>$33,000</small></div>
       <div class="qty">
         <button onclick="changeQty(this,-1)">-</button>
@@ -226,8 +226,8 @@ button.order{
       </div>
     </div>
 
-     <div class="product" data-name="SMG" data-price="43.000">
-      <div>SMG<br><small>$43,000</small></div>
+     <div class="product" data-name="Micro SMG" data-price="33000">
+      <div>Micro SMG<br><small>$33,000</small></div>
       <div class="qty">
         <button onclick="changeQty(this,-1)">-</button>
         <span>0</span>
@@ -357,10 +357,6 @@ button.order{
 </div>
 
 <script>
-const SCRIPT_URL = "PASTE_URL_WEB_APP_SCRIPT_DI_SINI";
-
-const DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1465998216393920750/mQ1jOSNzRanYTA01-hIOrPeheSzT0-YESTqBvQSwpLW7liGMFTnsK8BtPt-YAOsd5ZFl";
-
 
 function toggleGroup(title){
   document.querySelectorAll(".group-box").forEach(box=>{
@@ -425,12 +421,12 @@ function updateSummary(){
       const price = Number(p.dataset.price);
       const sub = qty*price;
       total += sub;
-      items.push(`${name} x${qty} = Rp${sub.toLocaleString()}`);
+      items.push(`${name} x${qty} = $${sub.toLocaleString()}`);
     }
   });
   document.getElementById("summary").innerHTML =
     items.length
-    ? `<b>Ringkasan:</b><br>${items.join("<br>")}<hr><b>Total:</b> Rp${total.toLocaleString()}`
+    ? `<b>Ringkasan:</b><br>${items.join("<br>")}<hr><b>Total:</b> $${total.toLocaleString()}`
     : "Belum ada pesanan";
 }
 
@@ -448,56 +444,42 @@ function submitOrder(){
     return;
   }
 
-  let itemsText = "";
+  let items = [];
   let total = 0;
 
   document.querySelectorAll(".product").forEach(p=>{
     const qty = parseInt(p.querySelector("span").innerText);
-    if(qty > 0){
+    if(qty>0){
       const price = Number(p.dataset.price);
-      const sub = qty * price;
-      total += sub;
-      itemsText += `• ${p.dataset.name} x${qty} = Rp${sub.toLocaleString()}\n`;
+      items.push({
+        name: p.dataset.name,
+        qty,
+        price
+      });
+      total += qty * price;
     }
   });
 
-  if(!itemsText){
+  if(items.length === 0){
     alert("Pilih minimal 1 produk");
     return;
   }
 
-  const payload = {
-    content:
-`🛒 **ORDER BARU NOCTURN NOIR**
-👤 **Customer:** ${customer}
-🧑‍💼 **PIC:** ${pic}
-
-📦 **Item:**
-${itemsText}
-💰 **Total:** Rp${total.toLocaleString()}`
-  };
-
-fetch(DISCORD_WEBHOOK, {
-  method: "POST",
-  mode: "no-cors",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify(payload)
-});
-
-document.getElementById("success").style.display = "block";
-
-.then(res => {
-    if(res.ok){
-      document.getElementById("success").style.display = "block";
-    } else {
-      alert("Gagal mengirim ke Discord");
-    }
+  fetch("/order",{
+    method: "POST",
+    headers: { "Content-Type":"application/json" },
+    body: JSON.stringify({
+      customer,
+      pic,
+      items,
+      total
+    })
   })
-  .catch(err => {
-    console.error(err);
-    alert("Error koneksi Discord");
+  .then(()=>{
+    document.getElementById("success").style.display="block";
+  })
+  .catch(()=>{
+    alert("Gagal mengirim order");
   });
 }
 </script>
