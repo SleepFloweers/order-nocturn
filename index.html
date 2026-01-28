@@ -358,7 +358,9 @@ button.order{
 
 <script>
 const SCRIPT_URL = "PASTE_URL_WEB_APP_SCRIPT_DI_SINI";
-const DISCORD_WEBHOOK = "PASTE_URL_WEBHOOK_DISCORD_DI_SINI";
+
+const DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1465998216393920750/mQ1jOSNzRanYTA01-hIOrPeheSzT0-YESTqBvQSwpLW7liGMFTnsK8BtPt-YAOsd5ZFl";
+
 
 function toggleGroup(title){
   document.querySelectorAll(".group-box").forEach(box=>{
@@ -446,46 +448,58 @@ function submitOrder(){
     return;
   }
 
-  let items = [];
+  let itemsText = "";
   let total = 0;
 
   document.querySelectorAll(".product").forEach(p=>{
     const qty = parseInt(p.querySelector("span").innerText);
-    if(qty>0){
+    if(qty > 0){
       const price = Number(p.dataset.price);
-      items.push({
-        name: p.dataset.name,
-        qty,
-        price
-      });
-      total += qty * price;
+      const sub = qty * price;
+      total += sub;
+      itemsText += `• ${p.dataset.name} x${qty} = Rp${sub.toLocaleString()}\n`;
     }
   });
 
-  if(items.length === 0){
+  if(!itemsText){
     alert("Pilih minimal 1 produk");
     return;
   }
 
-  fetch("/order",{
-    method: "POST",
-    headers: { "Content-Type":"application/json" },
-    body: JSON.stringify({
-      customer,
-      pic,
-      items,
-      total
-    })
-  })
-  .then(()=>{
-    document.getElementById("success").style.display="block";
-  })
-  .catch(()=>{
-    alert("Gagal mengirim order");
-  });
-  
-}
+  const payload = {
+    content:
+`🛒 **ORDER BARU NOCTURN NOIR**
+👤 **Customer:** ${customer}
+🧑‍💼 **PIC:** ${pic}
 
+📦 **Item:**
+${itemsText}
+💰 **Total:** Rp${total.toLocaleString()}`
+  };
+
+fetch(DISCORD_WEBHOOK, {
+  method: "POST",
+  mode: "no-cors",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify(payload)
+});
+
+document.getElementById("success").style.display = "block";
+
+.then(res => {
+    if(res.ok){
+      document.getElementById("success").style.display = "block";
+    } else {
+      alert("Gagal mengirim ke Discord");
+    }
+  })
+  .catch(err => {
+    console.error(err);
+    alert("Error koneksi Discord");
+  });
+}
 </script>
 </body>
 </html>
